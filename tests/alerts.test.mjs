@@ -332,7 +332,7 @@ describe("what alerts", () => {
 				assert.equal((await call(authorization)).status, 401, String(authorization));
 			}
 			const { summaries, domains, imports, ...checks } = await (await call(`Bearer ${CRON_SECRET}`)).json();
-			assert.deepEqual(checks, { postshiba: { alerts: [] }, telegram: { skipped: "already announced" } });
+			assert.deepEqual(checks, { postshiba: { alerts: [] }, telegram: { skipped: "already announced" }, bounces: { skipped: "SMTP isn't the email provider" } });
 			assert.equal(typeof summaries.queued, "number", "and the summary emails due this hour");
 			assert.equal(typeof domains.checked, "number", "and the verified domains due for their daily look at DNS");
 			assert.equal(typeof imports.checked, "number", "and the imports that stalled with nobody looking");

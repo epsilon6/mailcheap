@@ -193,6 +193,19 @@ MailCheap creates the rest: a tenant per account (slug `mc-<accountId>`), an SMT
 
 Without Resend, sign-in codes and alerts go through a tenant of their own, `mc-platform`, on the transactional cluster. The first one adds `EMAIL_FROM`'s domain there, and the server log lists the two CNAME records it needs; once PostShiba finds them, codes go out. A domain belongs to one tenant at PostShiba, so `EMAIL_FROM` needs a domain or subdomain that no newsletter sends from.
 
+#### Your own SMTP server
+
+On a self-hosted server, MailCheap can send through any SMTP server: your own mail server, or a relay. Set `EMAIL_PROVIDER=smtp` and the `SMTP_*` settings in `.env.example`. MailCheap Cloud never uses it, since it has no separate sending space per account.
+
+What SES and PostShiba do for you, MailCheap does itself here, with your help:
+
+1. **Signing.** Inboxes need SPF, DKIM and DMARC. Set `SMTP_DKIM_SELECTOR` to the selector your server signs with (or give MailCheap a key in `SMTP_DKIM_PRIVATE_KEY` to sign itself). The Domains page checks the SPF record and that DKIM key in DNS, and a domain only sends once both are there.
+2. **Bounces.** A recipient the server refuses while sending is a hard bounce at once. The rest come back later as bounce reports: set `SMTP_BOUNCE_ADDRESS` to a mailbox only for them, the `BOUNCE_IMAP_*` settings to read it, and have a scheduler call `/api/cron/bounces` every 5 minutes with `Authorization: Bearer <CRON_SECRET>` (`/api/cron/hourly` reads it too). Bounced and complained contacts are then suppressed and count toward the rates that pause a campaign, as with any provider. Don't send to a real list without the bounce mailbox.
+3. **Complaints.** Gmail and most large inboxes don't send spam complaints to a single server, so few arrive; those that do (feedback reports in the bounce mailbox) are handled like any provider's. Watch Google Postmaster Tools instead.
+4. **Pace.** `SMTP_RATE_PER_SECOND` and `SMTP_MAX_CONNECTIONS` keep under your server's limits. The admin page can't show them.
+
+Embedded images work over SMTP. A new mail server's address has no reputation yet: start with small sends, and check reverse DNS, SPF, DKIM and DMARC before a campaign.
+
 ### 5. QStash
 
 1. In the [Upstash console](https://console.upstash.com/qstash), open QStash and copy `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` (and `QSTASH_URL` if you picked a region other than the default).
