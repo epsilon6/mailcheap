@@ -41,12 +41,17 @@ export async function POST(request) {
 			try { const parsed = JSON.parse(bytes.toString("utf8")); input = { video: parsed.video, fileName: "video-thumbnail" }; }
 			catch { return Response.json({ error: "Invalid thumbnail settings" }, { status: 400 }); }
 		}
+		let fileName = request.headers.get("x-file-name")?.slice(0, 200);
+		if (!isJson && request.headers.has("x-original-file-name")) {
+			try { fileName = decodeURIComponent(request.headers.get("x-original-file-name").slice(0, 2400)).slice(0, 200); }
+			catch { return Response.json({ error: "Invalid image filename" }, { status: 400 }); }
+		}
 		const result = await runAction("upload_image", {
 			...current,
 			via: "dashboard",
 			input: input || {
 				base64: bytes.toString("base64"),
-				fileName: request.headers.get("x-file-name")?.slice(0, 200),
+				fileName,
 				contentType: request.headers.get("content-type")?.slice(0, 100),
 			},
 		});

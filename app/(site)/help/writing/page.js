@@ -121,6 +121,11 @@ export default function WritingPage() {
 				you move on, and so does the review step.
 			</p>
 
+			<h2 id="content-library">Your content library</h2>
+			<p>Open <LinkApp href="/content">Content</LinkApp> to browse the images shared by your account’s newsletters. Search their names, filter by folder or file type, and switch between grid and list views. Upload up to ten images at once, drag files onto the page, or paste an image from your clipboard.</p>
+			<p>Select an image to preview it, copy its link, give it a display name or file it in a folder. Renaming and organizing keep its permanent link working in existing emails. Alt text and Hosted or Embedded delivery stay with each image block in your campaign.</p>
+			<p>Used in campaigns lists saved campaigns that reference the image, including Code blocks, social icons, video thumbnails and campaign covers. Click a campaign to open it. Check more campaigns continues a long list. Unsaved edits do not appear yet; this list does not measure opens or clicks. Older uploads may show their stored filename until you rename them.</p>
+
 			<h2 id="text-styles">Headings, paragraphs and dividers</h2>
 			<p>
 				Click in a heading or paragraph to open its settings on the right: its level or text style, font, size, alignment, line

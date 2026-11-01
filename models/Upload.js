@@ -9,11 +9,17 @@ const uploadSchema = new mongoose.Schema(
 		pathname: { type: String, required: true },
 		contentType: { type: String, required: true },
 		bytes: { type: Number, required: true },
+		fileName: { type: String, maxlength: 200 },
+		name: { type: String, maxlength: 200 },
+		folder: { type: String, maxlength: 80, default: "" },
+		width: { type: Number, min: 1 },
+		height: { type: Number, min: 1 },
 	},
 	{ timestamps: true }
 );
 
 uploadSchema.plugin(accountScoped);
 uploadSchema.index({ accountId: 1, createdAt: -1 });
+uploadSchema.index({ accountId: 1, folder: 1, createdAt: -1 });
 
 export default mongoose.models.Upload || mongoose.model("Upload", uploadSchema);

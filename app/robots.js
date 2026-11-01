@@ -11,6 +11,7 @@ const PRIVATE_PATHS = [
 	"/billing",
 	"/campaigns",
 	"/contacts",
+	"/content",
 	"/domains",
 	"/mcp",
 	"/newsletters",

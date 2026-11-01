@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe, KeyRound, LayoutGrid, Send, Settings, Shield, Users } from "lucide-react";
+import { Globe, Images, KeyRound, LayoutGrid, Send, Settings, Shield, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // The open newsletter's pages, then the account's, which every newsletter shares. notifications: the bell
@@ -58,6 +58,7 @@ const NEWSLETTER_ITEMS = [
 ];
 
 const ACCOUNT_ITEMS = [
+	{ href: "/content", label: "Content", icon: Images },
 	{ href: "/domains", label: "Domains", icon: Globe },
 	{ href: "/api-keys", label: "API keys", icon: KeyRound },
 ];
