@@ -114,3 +114,10 @@ export async function removeWebsiteDomain(newsletterId) {
 	revalidatePath(SETTINGS_PATH, "layout");
 	return failure ? toFormError(failure) : { ok: true, removed: output.removed };
 }
+
+export async function saveSocialSettings(newsletterId, settings) {
+	const { failure } = await runDashboardAction("update_newsletter", { id: String(newsletterId ?? ""), imageDelivery: settings.imageDelivery, socialCatalog: settings.socialCatalog });
+	if (failure) return toFormError(failure);
+	revalidatePath("/newsletters", "layout");
+	return { ok: true };
+}

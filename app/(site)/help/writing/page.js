@@ -92,9 +92,9 @@ export default function WritingPage() {
 			<p>
 				Type <kbd>/</kbd> and pick Button to add a link readers can&apos;t miss, like Read the full story or Join the waitlist. Type
 				its text right on the button, press <kbd>Enter</kbd> and paste the link it opens: a web address, or an email address, which
-				opens an email to it. <kbd>Enter</kbd> again goes on below it. While you write on a button, a bar above it shows where it
-				goes, places it on the left, in the center or on the right, and deletes it, which you can{" "}
-				<Link href={getHelpHref("writing", "deleting-blocks")}>undo</Link>. Click its link, or press <kbd>⌘ K</kbd>, to change it.
+				opens an email to it. <kbd>Enter</kbd> again goes on below it. While you write on a button, the settings panel on the right edits its link,
+				places it on the left, in the center or on the right, and duplicates, moves or deletes it. Deletions can be{" "}
+				<Link href={getHelpHref("writing", "deleting-blocks")}>undo</Link>. Use the link field, or press <kbd>⌘ K</kbd>, to change its destination.
 				Names and fields work in its text and its link.
 			</p>
 			<FigureHelp
@@ -109,6 +109,20 @@ export default function WritingPage() {
 				issue can go out: a <Link href={getHelpHref("writing", "problems")}>red dot</Link> beside it says which is missing once
 				you move on, and so does the review step.
 			</p>
+
+			<h2 id="video-blocks">Video</h2>
+			<p>Choose Video at the end of the content dock, then click its placeholder to open its settings. Paste a YouTube, TikTok, Vimeo, Loom or another HTTPS video URL. The thumbnail links to the video so readers can watch on its website.</p>
+			<p>Get automatic thumbnail tries the provider&apos;s public preview. If it is unavailable, upload a custom image or choose one from your image library. Set a title and alt text, then adjust the play button, alignment, width, background, border and spacing. Apply thumbnail settings after changing the play button so the image itself contains your changes.</p>
+			<p>Choose Hosted, Embedded or the newsletter default for each video thumbnail. Embedded delivery sends the preview image with the email through a compatible email provider. Your stored image remains available for editing and web previews. Add both a video URL and a thumbnail before sending.</p>
+
+			<FigureHelp src="/help/writing/video-block.webp" alt="A sample Video block with a clickable thumbnail and right-side controls for custom images, title and alt text." caption="A Video block and its thumbnail settings" />
+			<h2 id="social-blocks">Social links</h2>
+			<p>Choose Social in the content dock, then click its icons to open the settings panel. Add your profile URLs, choose the icon style, size, spacing and alignment, and reorder or remove networks. Every network needs an icon and a destination before sending.</p>
+			<p>In <LinkApp href="/newsletters/socials">Social networks and images</LinkApp>, add new platforms, upload their icons and save optional default links. Choose which networks appear in new blocks. Existing blocks keep their saved links and icons when you change the defaults.</p>
+			<FigureHelp src="/help/writing/social-block.webp" alt="A sample campaign with centered social icons and a right-side panel for profile links and accessible descriptions." caption="A Social block and its settings" />
+			<h2 id="image-delivery">Hosted and embedded images</h2>
+			<p>Each picture and Social block can use the newsletter default, load a hosted image or embed its image in the email. Hosted images keep the email smaller. Embedded images travel as inline attachments, so the recipient does not need your image server to display them. Their appearance depends on the recipient&apos;s email app.</p>
+			<p>Set the newsletter default in <LinkApp href="/newsletters/socials">Social networks and images</LinkApp>. Your stored images remain available for editing and web previews with either choice. Embedded delivery currently requires a compatible email provider and an image uploaded to your account, or a built-in social icon. Embedded files total at most 8 MB per email; use hosted delivery for larger pictures.</p>
 
 			<h2 id="html">HTML blocks</h2>
 			<p>
@@ -321,6 +335,10 @@ export default function WritingPage() {
 			<p>
 				When you&apos;re done, <Link href={getHelpHref("sending")}>send or schedule it</Link>.
 			</p>
+			<h2 id="designer-blocks">Designing with blocks</h2>
+			<p>The content blocks dock inserts images, headings, paragraphs, buttons, dividers, spacers and HTML code. Click a block to insert it at the cursor, or drag it into the issue. HTML blocks keep their existing code editor.</p>
+			<p>Click inside a heading or paragraph to open its typography, alignment, color, spacing and border settings. Click anywhere in a divider’s highlighted area to adjust its line and spacing. You can also tab to it and press Enter or Space. The larger selection area appears only in the editor. Image settings include size, a web link, new-tab behavior and alt text. Use a short description for meaningful images and empty alt text for decorative images.</p>
+			<p>These designer controls are in development. Separate mobile styling and complete block-background controls are not yet available. Legacy development-only images require a signed-in session. Re-upload them to configured permanent storage for hosted delivery; new uploads can use persistent filesystem storage, S3 or Blob.</p>
 		</ArticleHelp>
 	);
 }

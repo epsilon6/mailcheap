@@ -120,3 +120,54 @@ test("presend checks pass when everything is ready", () => {
 	assert.equal(blocking.length, 0);
 	assert.ok(checks.every(({ isOk }) => isOk));
 });
+
+
+test("designer image settings preserve size, alt text and safe links in email output", () => {
+	const { html } = renderEmail({ format: "rich", html: '<img src="https://example.com/image.png" alt="A garden" data-size-mode="scale" data-scale="58" data-image-link="https://example.com/page" data-image-new-tab="true">', subject: "Hello", newsletter });
+	assert.match(html, /width:58%/);
+	assert.match(html, /alt="A garden"/);
+	assert.match(html, /href="https:\/\/example.com\/page" target="_blank" rel="noopener noreferrer"/);
+	assert.doesNotMatch(html, /data-image-link=/);
+});
+
+test("designer image links reject executable protocols", () => {
+	const { html } = renderEmail({ format: "rich", html: '<img src="https://example.com/image.png" data-image-link="javascript:alert(1)" data-size-mode="fill">', subject: "Hello", newsletter });
+	assert.doesNotMatch(html, /javascript:/);
+	assert.match(html, /width:100%/);
+});
+
+test("heading design survives sanitization and renders safe inline email styles", () => {
+ const { html } = renderEmail({ format: "rich", html: '<h2 data-heading-align="center" data-heading-size="40" data-heading-color="#123456">Hello</h2>', subject: "Hello", newsletter });
+ assert.match(html, /text-align:center/);
+ assert.match(html, /font-size:40px/);
+ assert.match(html, /color:#123456/);
+ assert.doesNotMatch(html, /data-heading-/);
+});
+test("heading design rejects CSS injection", () => {
+ const { html } = renderEmail({ format: "rich", html: '<h2 data-heading-align="center;position:fixed" data-heading-color="url(https://example.com)">Hello</h2>', subject: "Hello", newsletter });
+ assert.doesNotMatch(html, /position:fixed|color:url/);
+});
+
+test("paragraph controls preserve safe formatting and inline emphasis", () => {
+ const { html } = renderEmail({ format: "rich", html: '<p data-heading-align="center" data-heading-size="18" data-heading-padding="12"><strong>Hello</strong> <a href="https://example.com">there</a></p>', subject: "Hello", newsletter });
+ assert.match(html, /text-align:center;font-size:18px;padding:12px/);
+ assert.match(html, /<strong>Hello<\/strong>/);
+ assert.match(html, /href="https:\/\/example.com"/);
+ assert.doesNotMatch(html, /data-heading-/);
+});
+
+test("divider design preserves line settings and spacing", () => {
+ const { html } = renderEmail({ format: "rich", html: '<hr data-divider-color="#123456" data-divider-line="dashed" data-divider-thickness="13" data-divider-left="24">', subject: "Hello", newsletter });
+ assert.match(html, /border-top:13px dashed #123456/);
+ assert.match(html, /margin:12px 24px 12px 24px/);
+ assert.doesNotMatch(html, /data-divider-/);
+});
+
+
+test("column rows render as presentation tables with validated proportional widths", () => {
+ const { html } = renderEmail({ format: "rich", html: '<table data-columns=""><tbody><tr><td data-column-span="6"><h2>Left</h2></td><td data-column-span="6"><p>Right</p><img src="https://example.com/test.png" alt="Test"></td></tr></tbody></table>', subject: "Columns", newsletter });
+ assert.match(html, /role="presentation"/);
+ assert.match(html, /width:50%;vertical-align:top/);
+ assert.match(html, /<h2>Left<\/h2>/);
+ assert.match(html, /<p>Right<\/p>/);
+});

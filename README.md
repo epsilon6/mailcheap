@@ -347,3 +347,7 @@ Integration tests start a throwaway `mongod` per file, so `mongod` has to be on 
 If you change MailCheap and run it for other people, the AGPL asks you to offer them the source of your version: point the "Source code" link (`SOURCE_URL` in `lib/site.js`) at it. The one-time release before this license, [67d13b0](https://github.com/marclou/mailcheap/tree/67d13b028a6ecae9ec56d49c4b2db58019217eba) in github.com/marclou/mailcheap's history, stays under MIT.
 
 Made by [Marc Lou](https://x.com/marclou).
+
+### Social blocks and image delivery
+
+Social blocks, custom social catalogs, permanent local image storage and per-image hosted/embedded delivery are documented in [Social blocks and image delivery](docs/social-and-image-delivery.md). Inline attachments currently require Amazon SES.

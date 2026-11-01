@@ -16,6 +16,7 @@ const BOTID_PATH_PREFIX = "/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-4
 // uptime checks. The consent page checks the session itself, so a signed-out visitor goes to sign-in with
 // the app's request.
 const PUBLIC_PATHS = [
+	/^\/api\/image-assets\/[0-9a-f-]{36}\.(png|jpe?g|gif|webp)$/,
 	/^\/api\/health$/,
 	/^\/favicon\.ico$/,
 	/^\/(robots\.txt|sitemap\.xml|site\.webmanifest)$/,

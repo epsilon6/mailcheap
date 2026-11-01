@@ -1,193 +1,53 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useEditorState } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
-import { AlignCenter, AlignLeft, AlignRight, CornerDownLeft, Trash2 } from "lucide-react";
-import { ButtonFormat } from "@/components/MenuFormat";
+import { AlignCenter, AlignLeft, AlignRight, ImageIcon, Copy, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { INSPECTOR_STYLES } from "@/components/MenuHeading";
 import { deleteBlock } from "@/lib/editor-undo-delete";
 
-// A toolbar for the picture under the pointer, or the selected one on touch screens and from the keyboard: where it
-// sits in the column (lib/editor-image.js), its alt text and a way to remove it. It sits inside the picture's top edge,
-// in the editor's parent next to the blocks' grip (lib/editor-block-handle.js), so the pointer gets to it without
-// leaving the picture.
-export default function MenuImage({ editor }) {
-	const [hovered, setHovered] = useState(null);
-	const [isEditingAlt, setIsEditingAlt] = useState(false);
-	const [isFocusInside, setIsFocusInside] = useState(false);
-	const [isDragging, setIsDragging] = useState(false);
-	const menuRef = useRef(null);
-	const target = useEditorState({ editor, selector: ({ editor: current }) => getTarget(current, hovered, isFocusInside) });
-	const image = target && !isDragging ? editor.view.nodeDOM(target.pos) : null;
-	const container = editor.isEditorContentInitialized ? editor.view.dom.parentElement : null;
-
-	useEffect(() => {
-		const { dom } = editor.view;
-		function onOver(event) {
-			setHovered(event.target instanceof Element ? event.target.closest("[data-resize-container]") : null);
-		}
-		function onLeave(event) {
-			if (!isInside(menuRef.current, event.relatedTarget)) setHovered(null);
-		}
-		const onDragStart = () => setIsDragging(true);
-		const onDragEnd = () => setIsDragging(false);
-		dom.addEventListener("pointerover", onOver);
-		dom.addEventListener("pointerleave", onLeave);
-		window.addEventListener("dragstart", onDragStart);
-		window.addEventListener("dragend", onDragEnd);
-		window.addEventListener("drop", onDragEnd);
-		return () => {
-			dom.removeEventListener("pointerover", onOver);
-			dom.removeEventListener("pointerleave", onLeave);
-			window.removeEventListener("dragstart", onDragStart);
-			window.removeEventListener("dragend", onDragEnd);
-			window.removeEventListener("drop", onDragEnd);
-		};
-	}, [editor]);
-
-	useLayoutEffect(() => {
-		const menu = menuRef.current;
-		if (!menu || !image) return;
-		const picture = image.querySelector("img") ?? image;
-		const place = () => placeMenu(menu, editor.view, picture);
-		place();
-		const observer = new ResizeObserver(place);
-		observer.observe(editor.view.dom);
-		observer.observe(picture);
-		editor.on("transaction", place);
-		window.addEventListener("resize", place);
-		return () => {
-			observer.disconnect();
-			editor.off("transaction", place);
-			window.removeEventListener("resize", place);
-		};
-	}, [editor, image, isEditingAlt]);
-
-	if (!container || !image) return null;
-
-	function setAlign(align) {
-		editor.chain().focus().setNodeSelection(target.pos).updateAttributes("image", { align }).run();
-	}
-
-	function editAlt() {
-		editor.chain().setNodeSelection(target.pos).run();
-		setIsEditingAlt(true);
-	}
-
-	function changeAlt(event) {
-		const alt = event.currentTarget.value.trim();
-		editor.chain().command(({ tr }) => Boolean(tr.setNodeAttribute(target.pos, "alt", alt))).run();
-	}
-
-	function finishAlt() {
-		setIsEditingAlt(false);
-		setIsFocusInside(false);
-		editor.chain().focus().setNodeSelection(target.pos).run();
-	}
-
-	function remove() {
-		deleteBlock(editor, target.pos);
-		setHovered(null);
-	}
-
-	return createPortal(
-		<div
-			ref={menuRef}
-			onPointerLeave={(event) => !isInside(editor.view.dom, event.relatedTarget) && setHovered(null)}
-			onFocus={() => setIsFocusInside(true)}
-			onBlur={(event) => !isInside(event.currentTarget, event.relatedTarget) && setIsFocusInside(false)}
-			className="absolute top-0 left-0 z-20 animate-in duration-150 fade-in-0"
-		>
-			<div className="flex items-center gap-0.5 rounded-xl border bg-popover p-1 text-popover-foreground shadow-lg">
-				{isEditingAlt ? (
-					<form
-						onSubmit={(event) => {
-							event.preventDefault();
-							finishAlt();
-						}}
-						onMouseDown={(event) => event.target instanceof HTMLInputElement || event.preventDefault()}
-						className="flex items-center gap-0.5"
-					>
-						<span className="pl-2 text-xs font-semibold text-muted-foreground">Alt</span>
-						<input
-							name="alt"
-							type="text"
-							autoFocus
-							defaultValue={target.alt}
-							placeholder="Describe this picture"
-							aria-label="Alt text"
-							onChange={changeAlt}
-							onKeyDown={(event) => event.key === "Escape" && finishAlt()}
-							onBlur={() => setIsEditingAlt(false)}
-							className="h-8 w-56 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
-						/>
-						<ButtonFormat label="Done" type="submit">
-							<CornerDownLeft />
-						</ButtonFormat>
-					</form>
-				) : (
-					// Clicks keep the editor's focus, and its selection, as the format menu's do.
-					<div onMouseDown={(event) => event.preventDefault()} className="flex items-center gap-0.5">
-						{ALIGNMENTS.map(({ value, label, icon: Icon }) => (
-							<ButtonFormat key={value} label={label} isActive={target.align === value} onClick={() => setAlign(value)}>
-								<Icon />
-							</ButtonFormat>
-						))}
-						<span aria-hidden className="mx-0.5 h-5 w-px bg-border" />
-						<ButtonFormat label={target.alt ? `Alt text: ${target.alt}` : "Add alt text"} isActive={Boolean(target.alt)} onClick={editAlt}>
-							<span className="text-xs font-semibold">Alt</span>
-						</ButtonFormat>
-						<ButtonFormat label="Delete image" onClick={remove}>
-							<Trash2 />
-						</ButtonFormat>
-					</div>
-				)}
-			</div>
-		</div>,
-		container
-	);
+export default function MenuImage({ editor, visible = true, newsletter }) {
+ const target = useEditorState({ editor, selector: ({ editor: current }) => {
+  const { selection } = current.state;
+  return selection instanceof NodeSelection && selection.node.type.name === "image" ? { pos: selection.from, ...selection.node.attrs } : null;
+ }});
+ if (!visible || !target) return null;
+ function update(attrs) { editor.chain().setNodeSelection(target.pos).updateAttributes("image", attrs).run(); }
+ function duplicate() {
+  const node = editor.state.doc.nodeAt(target.pos);
+  editor.chain().focus().insertContentAt(target.pos + node.nodeSize, node.toJSON()).setNodeSelection(target.pos + node.nodeSize).run();
+ }
+ function move(direction) {
+  const { doc } = editor.state;
+  const resolved = doc.resolve(target.pos);
+  const index = resolved.index();
+  const neighbor = index + direction;
+  if (neighbor < 0 || neighbor >= resolved.parent.childCount) return;
+  const node = doc.nodeAt(target.pos);
+  const sibling = resolved.parent.child(neighbor);
+  const from = direction < 0 ? target.pos - sibling.nodeSize : target.pos;
+  const to = direction < 0 ? target.pos + node.nodeSize : target.pos + node.nodeSize + sibling.nodeSize;
+  editor.chain().focus().insertContentAt({ from, to }, direction < 0 ? [node.toJSON(), sibling.toJSON()] : [sibling.toJSON(), node.toJSON()]).setNodeSelection(direction < 0 ? from : from + sibling.nodeSize).run();
+ }
+ const resolved = editor.state.doc.resolve(target.pos);
+ return createPortal(<aside aria-label="Image settings" className="heading-inspector">
+  <style>{INSPECTOR_STYLES}{`.image-inspector-input{width:100%;min-width:0;border:1px solid var(--border);border-radius:7px;padding:9px;background:var(--background);color:var(--foreground);font-size:12px}.image-inspector-input:focus{outline:2px solid var(--ring);outline-offset:2px}.image-inspector-hint{font-size:11px;line-height:1.5;color:var(--muted-foreground)}.image-inspector-modes{display:flex;gap:4px}.image-inspector-modes button{flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:6px;font-size:11px}.image-inspector-modes button[aria-pressed=true]{background:var(--muted);box-shadow:inset 0 0 0 1px var(--foreground)}`}</style>
+  <header className="heading-inspector-header"><div className="heading-inspector-icon"><ImageIcon size={19} /></div><div><h2>Image</h2><p>Style the selected block</p></div></header>
+  <div className="heading-inspector-body">
+   <section><h3>Size & alignment</h3><div className="heading-field"><span>Image size</span><div className="image-inspector-modes">{["original","fill","scale"].map(mode => <button type="button" key={mode} aria-pressed={(target.sizeMode || "original") === mode} onClick={() => update({sizeMode:mode,width:null,height:null})}>{mode[0].toUpperCase()+mode.slice(1)}</button>)}</div></div>
+   {target.sizeMode === "scale" && <label className="heading-field"><span>Scale · {target.scale || 100}%</span><input aria-label="Image scale" type="range" min="1" max="100" value={target.scale || 100} onChange={event => update({scale:Number(event.target.value)})} /></label>}
+   <div className="heading-field"><span>Alignment</span><div className="heading-align" style={{gridTemplateColumns:"repeat(3,1fr)"}}>{ALIGNMENTS.map(({value,label,icon:Icon}) => <button type="button" key={value} aria-label={label} aria-pressed={target.align === value} onClick={() => update({align:value})}><Icon size={17} /></button>)}</div></div></section>
+   <section><h3>Link</h3><label className="heading-field"><span>Destination URL</span><input key={`${target.pos}:${target.src}`} className="image-inspector-input" type="url" aria-label="Image link" placeholder="https://example.com" defaultValue={target.href || ""} onBlur={event => { const href=event.target.value.trim(); if (!href || /^https?:\/\//i.test(href)) { event.target.setCustomValidity("");update({href}); } else {event.target.setCustomValidity("Use an http:// or https:// link");event.target.reportValidity();} }} /></label><label style={{display:"flex",gap:8,fontSize:12,alignItems:"center"}}><input type="checkbox" checked={Boolean(target.newTab)} onChange={event => update({newTab:event.target.checked})} />Open link in new tab</label></section>
+   <section><h3>Delivery</h3><label className="heading-field"><span>Image in delivered email</span><select aria-label="Image delivery" value={target.delivery || "default"} onChange={event => update({delivery:event.target.value})}><option value="default">Newsletter default ({newsletter?.imageDelivery || "hosted"})</option><option value="hosted">Hosted image</option><option value="embedded">Embed in email</option></select></label><p className="image-inspector-hint">Embedded images travel with the email. A stored copy remains for editing and web previews. Embedding requires an image from your library.</p>{target.src?.includes("/api/dev-images/") && <p className="image-inspector-hint">This older development image is private. Re-upload it for hosted email delivery, or choose Embedded.</p>}</section>
+   <section><h3>Accessibility</h3><label className="heading-field"><span>Alt text</span><textarea className="image-inspector-input" rows={3} aria-label="Image description" placeholder="Describe this picture" value={target.alt || ""} onChange={event => update({alt:event.target.value})} /></label><p className="image-inspector-hint">Describe meaningful images. Leave blank if the image is purely decorative.</p></section>
+  </div>
+  <footer className="heading-inspector-footer"><button type="button" onClick={duplicate}><Copy size={15} />Duplicate</button><button type="button" className="heading-delete" onClick={() => deleteBlock(editor,target.pos)}><Trash2 size={15} />Delete</button><button type="button" disabled={resolved.index() === 0} onClick={() => move(-1)}><ArrowUp size={15} />Move up</button><button type="button" disabled={resolved.index() === resolved.parent.childCount-1} onClick={() => move(1)}><ArrowDown size={15} />Move down</button></footer>
+ </aside>, document.body);
 }
 
-// The picture being edited from the toolbar, else the one under the pointer, else the selected one while the editor has
-// the focus.
-function getTarget(editor, hovered, isFocusInside) {
-	if (!editor.isEditable) return null;
-	const { selection, doc } = editor.state;
-	const selected = selection instanceof NodeSelection && selection.node.type.name === "image" ? selection.from : null;
-	const isPinned = isFocusInside && !editor.isFocused && selected !== null;
-	const pos = isPinned ? selected : (getImagePos(editor.view, hovered) ?? (editor.isFocused ? selected : null));
-	const node = pos === null ? null : doc.nodeAt(pos);
-	return node?.type.name === "image" ? { pos, align: node.attrs.align, alt: node.attrs.alt ?? "" } : null;
-}
-
-function getImagePos(view, element) {
-	if (!element?.isConnected || !view.dom.contains(element)) return null;
-	return view.posAtDOM(element, 0);
-}
-
-// Centered in the picture's top edge, and within the text column so the grip in the gutter stays free.
-function placeMenu(menu, view, image) {
-	const parent = menu.offsetParent?.getBoundingClientRect();
-	if (!parent) return;
-	const picture = image.getBoundingClientRect();
-	const editor = view.dom.getBoundingClientRect();
-	const style = getComputedStyle(view.dom);
-	const columnLeft = editor.left + Number.parseFloat(style.paddingLeft);
-	const columnRight = editor.right - Number.parseFloat(style.paddingRight);
-	const width = menu.offsetWidth;
-	const left = Math.max(columnLeft, Math.min(picture.left + (picture.width - width) / 2, columnRight - width));
-	menu.style.transform = `translate(${Math.round(left - parent.left)}px, ${Math.round(picture.top - parent.top + INSET)}px)`;
-}
-
-function isInside(element, node) {
-	return Boolean(element) && node instanceof Node && element.contains(node);
-}
-
-const INSET = 8;
-// Also a button's (components/MenuButton.jsx).
 export const ALIGNMENTS = [
-	{ value: "left", label: "Align left", icon: AlignLeft },
-	{ value: "center", label: "Center", icon: AlignCenter },
-	{ value: "right", label: "Align right", icon: AlignRight },
+ { value: "left", label: "Align left", icon: AlignLeft },
+ { value: "center", label: "Center", icon: AlignCenter },
+ { value: "right", label: "Align right", icon: AlignRight },
 ];

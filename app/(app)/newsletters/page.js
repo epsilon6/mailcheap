@@ -1,4 +1,4 @@
-import { AtSign, Bell, BrushCleaning, CodeXml, Globe, Hand, MailCheck, Palette } from "lucide-react";
+import { AtSign, Share2, Bell, BrushCleaning, CodeXml, Globe, Hand, MailCheck, Palette } from "lucide-react";
 import AvatarNewsletter from "@/components/AvatarNewsletter";
 import CardSettingsSection from "@/components/CardSettingsSection";
 import HeaderPage from "@/components/HeaderPage";
@@ -54,6 +54,7 @@ export default async function SettingsPage() {
 						stagger={SETTINGS_SECTIONS.length + 2}
 					/>
 				</li>
+				<li><CardSettingsSection href="/newsletters/socials" icon={Share2} label="Social networks and images" state={{ text: "Icons, profile links and image delivery" }} stagger={SETTINGS_SECTIONS.length + 3} /></li>
 				{page.isCloud && (
 					<li>
 						<CardSettingsSection

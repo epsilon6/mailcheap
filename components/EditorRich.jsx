@@ -1,9 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { Play, Share2, CodeXml, Heading, ImagePlus, Minus, MousePointerClick, Pilcrow, Space } from "lucide-react";
 import FileHandler from "@tiptap/extension-file-handler";
 import { Placeholder } from "@tiptap/extensions";
+import { ColumnRow, Column, splitBlockBeside, insertInColumn, showColumnDropPreview, clearColumnDropPreview } from "@/lib/editor-columns";
+import { VideoBlock } from "@/lib/editor-video";
+import MenuVideo from "@/components/MenuVideo";
+import { SocialBlock } from "@/lib/editor-social";
+import { newSocialBlock } from "@/lib/social-blocks";
+import MenuSocial from "@/components/MenuSocial";
+import MenuColumns from "@/components/MenuColumns";
+import MenuDivider from "@/components/MenuDivider";
+import { DividerDesign } from "@/lib/editor-divider";
+import MenuHeading from "@/components/MenuHeading";
+import { HeadingDesign } from "@/lib/editor-heading";
 import StarterKit from "@tiptap/starter-kit";
 import { HtmlBlock, editHtmlBlock } from "@/components/BlockHtml";
 import { Section, SectionsContext } from "@/components/BlockSection";
@@ -33,6 +46,86 @@ import { useFileDropGuard } from "@/lib/use-file-drop";
 const MIN_HEIGHT = "min-h-[560px]";
 const NO_FIELDS = [];
 const NO_TAGS = [];
+const DOCK_STYLES = `
+/* Editor-only guides: these selectors never enter campaign content or email markup. */
+.prose-issue table[data-columns] > tbody > tr > td[data-column-span] {
+  outline: 1px dashed #b8bcc3;
+  outline-offset: -2px;
+  background-color: rgba(148, 153, 163, 0.055);
+}
+.prose-issue table[data-columns] > tbody > tr > td[data-column-span]:focus-within {
+  outline-color: #8b919b;
+  background-color: rgba(148, 153, 163, 0.09);
+}
+.prose-issue .editor-divider-target {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: 1px solid transparent;
+}
+.prose-issue .editor-divider-target:hover,
+.prose-issue .editor-divider-target:focus-visible,
+.prose-issue .editor-divider-target.ProseMirror-selectednode {
+  background: rgba(148, 153, 163, 0.1);
+  outline: 1px dashed #9ca3af;
+}
+.prose-issue .editor-divider-target > hr { flex: none; }
+.prose-issue .editor-social-target { min-height:44px; margin:12px 0; cursor:pointer; border-radius:6px; }
+.prose-issue .editor-social-target:hover,.prose-issue .editor-social-target.ProseMirror-selectednode { outline:1px dashed #9ca3af; outline-offset:3px; }
+.prose-issue .editor-social-target img { margin:0!important; border-radius:0!important; }
+.prose-issue .editor-video-target { min-height:80px; margin:12px 0; cursor:pointer; border-radius:6px; }
+.prose-issue .editor-video-target:hover,.prose-issue .editor-video-target.ProseMirror-selectednode { outline:1px dashed #9ca3af; outline-offset:3px; }
+.prose-issue .editor-video-target img { margin:0!important; outline:none; }
+/* The block palette belongs to the workspace, outside the email card. */
+.designer-block-dock {
+  position: fixed;
+  z-index: 25;
+  left: calc(var(--sidebar-width) + 1rem);
+  top: calc(var(--plan-bar-height, 0px) + 6rem);
+  width: 15rem;
+  max-height: calc(100dvh - 8rem);
+  overflow-y: auto;
+}
+@media (min-width: 1100px) {
+  .designer-content-column {
+    width: calc(100% - 17rem);
+    margin-left: max(17rem, calc((100% - 42rem) / 2));
+    margin-right: auto;
+  }
+}
+@media (max-width: 1099px) {
+  .designer-block-dock {
+    left: 1rem;
+    right: 1rem;
+    top: auto;
+    bottom: 1rem;
+    width: auto;
+    max-height: 12rem;
+  }
+  .designer-block-dock > div {
+    display: flex;
+    overflow-x: auto;
+  }
+  .designer-block-dock button { min-width: 5rem; }
+  .designer-content-column { padding-bottom: 13rem; }
+}
+`;
+
+const BLOCK_DRAG_TYPE = "application/x-mailcheap-block";
+const BLOCKS = [
+	{ id: "image", label: "Image", icon: ImagePlus },
+	{ id: "heading", label: "Heading", icon: Heading },
+	{ id: "paragraph", label: "Paragraph", icon: Pilcrow },
+	{ id: "button", label: "Button", icon: MousePointerClick },
+	{ id: "divider", label: "Divider", icon: Minus },
+	{ id: "spacer", label: "Spacer", icon: Space },
+	{ id: "code", label: "Code", icon: CodeXml },
+	{ id: "social", label: "Social", icon: Share2 },
+	{ id: "video", label: "Video", icon: Play },
+];
 
 // contactFields: the account's fields, whose tags the editor draws as placeholders and its slash menu inserts. Add a
 // field, in the slash menu, opens them to add one, which goes where the slash was: onContactFieldsChange(fields) gives
@@ -45,6 +138,7 @@ const NO_TAGS = [];
 export default function EditorRich({
 	ref,
 	gutterRef,
+	showBlocks = true,
 	content,
 	onChange,
 	contactFields = NO_FIELDS,
@@ -80,6 +174,12 @@ export default function EditorRich({
 					alwaysPreserveAspectRatio: true,
 				},
 			}),
+			HeadingDesign,
+			DividerDesign,
+			SocialBlock,
+			VideoBlock,
+			ColumnRow,
+			Column,
 			Callout,
 			ButtonBlock.configure({ newsletter, onEditLink: () => setIsEditingButtonLink(true) }),
 			HtmlBlock.configure({ newsletter }),
@@ -111,8 +211,40 @@ export default function EditorRich({
 				return true;
 			},
 			// The file handler takes pictures and passes on any other file, which would vanish without a word.
-			handleDrop: (_view, event) => {
-				const files = [...(event.dataTransfer?.files ?? [])];
+			handleDOMEvents: {
+                dragleave: (view, event) => { if (!view.dom.contains(event.relatedTarget)) clearColumnDropPreview(view); return false; },
+                dragend: (view) => { clearColumnDropPreview(view); return false; },
+                dragover: (view, event) => {
+                    if (!Array.from(event.dataTransfer?.types || []).includes(BLOCK_DRAG_TYPE) && !view.dragging) return false;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = view.dragging?.move ? "move" : "copy";
+                    return showColumnDropPreview(view, event);
+                },
+            },
+            handleDrop: (view, event) => {
+                clearColumnDropPreview(view);
+				const kind = event.dataTransfer?.getData(BLOCK_DRAG_TYPE);
+				if (kind && BLOCKS.some((item) => item.id === kind)) {
+					event.preventDefault();
+					const newBlock = kind === "video" ? { type: "video", attrs: { config: { id: crypto.randomUUID() } } } : kind === "social" ? { type: "social", attrs: { config: newSocialBlock(newsletter, window.location.origin) } } : kind === "heading" ? { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Heading" }] } : kind === "divider" ? { type: "horizontalRule" } : kind === "button" ? { type: "button", content: [{ type: "text", text: "Button" }] } : kind === "code" ? { type: "htmlBlock", attrs: { isNew: true } } : { type: "paragraph", content: [{ type: "text", text: kind === "image" ? "Choose Image to add a picture here" : "Write your text" }] };
+                    if (insertInColumn(editor, event, newBlock) || splitBlockBeside(editor, event, newBlock)) { if (kind === "image") setIsPickingImage(true); return true; }
+                    const position = view.posAtCoords({ left: event.clientX, top: event.clientY });
+					if (position) editor.commands.setTextSelection(position.pos);
+					insertBlock(kind);
+					return true;
+				}
+				const dragged = view.dragging;
+                const draggedNode = dragged?.slice?.content?.childCount === 1 ? dragged.slice.content.firstChild : null;
+                if (draggedNode?.isBlock && !["columnRow", "column"].includes(draggedNode.type.name)) {
+                    const selected = view.state.selection;
+                    const sourcePos = dragged.move && (selected.node === draggedNode || selected.node?.eq(draggedNode)) ? selected.from : null;
+                    if (insertInColumn(editor, event, draggedNode.toJSON(), sourcePos) || splitBlockBeside(editor, event, draggedNode.toJSON(), sourcePos)) {
+                        event.preventDefault();
+                        view.dragging = null;
+                        return true;
+                    }
+                }
+                const files = [...(event.dataTransfer?.files ?? [])];
 				if (files.length === 0 || files.some((file) => IMAGE_TYPES.includes(file.type))) return false;
 				event.preventDefault();
 				toast.error(IMAGE_TYPE_ERROR);
@@ -150,11 +282,39 @@ export default function EditorRich({
 		if (editor && !editor.isDestroyed) setEditorFields(editor, contactFields);
 	}, [editor, contactFields]);
 
+	function insertBlock(kind) {
+		if (!editor || editor.isDestroyed) return;
+		if (kind === "image") return setIsPickingImage(true);
+		const chain = editor.chain().focus();
+		if (kind === "video") chain.insertContent({ type: "video", attrs: { config: { id: crypto.randomUUID() } } }).run();
+		else if (kind === "social") chain.insertContent({ type: "social", attrs: { config: newSocialBlock(newsletter, window.location.origin) } }).run();
+		else if (kind === "heading") chain.insertContent({ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Heading" }] }).run();
+		else if (kind === "paragraph") chain.insertContent({ type: "paragraph", content: [{ type: "text", text: "Write your text" }] }).run();
+		else if (kind === "button") chain.insertContent({ type: "button", content: [{ type: "text", text: "Button" }] }).run();
+		else if (kind === "divider") chain.setHorizontalRule().run();
+		else if (kind === "code") chain.insertContent({ type: "htmlBlock", attrs: { isNew: true } }).run();
+		else if (kind === "spacer") chain.insertContent({ type: "htmlBlock", attrs: { html: '<table role="presentation" width="100%"><tr><td height="24" style="height:24px;font-size:0;line-height:0">&nbsp;</td></tr></table>' } }).run();
+	}
+
 	if (!editor) return <div className={MIN_HEIGHT} />;
 
 	return (
 		<SectionsContext value={sections}>
-			<EditorContent editor={editor} className="relative" />
+			<style>{DOCK_STYLES}</style>
+			<div>
+				{showBlocks && createPortal(<aside aria-label="Content blocks" className="designer-block-dock rounded-xl border bg-background p-4 shadow-sm">
+					<h2 className="text-sm font-semibold">Content blocks</h2>
+					<p className="mt-1 text-xs text-muted-foreground">Drag a block into your email or click to insert it.</p>
+					<div className="mt-3 grid grid-cols-2 gap-2">
+						{BLOCKS.map(({ id, label, icon: Icon }) => (
+							<button key={id} type="button" draggable onDragEnd={() => clearColumnDropPreview(editor.view)} onDragStart={(event) => { event.dataTransfer.setData(BLOCK_DRAG_TYPE, id); event.dataTransfer.setData("text/plain", label); event.dataTransfer.effectAllowed = "copy"; }} onClick={() => insertBlock(id)} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2">
+								<Icon aria-hidden="true" className="size-4" />{label}
+							</button>
+						))}
+					</div>
+				</aside>, document.body)}
+				<EditorContent editor={editor} className="relative min-w-0 flex-1" />
+			</div>
 			<GutterProblems
 				editor={editor}
 				gutterRef={gutterRef}
@@ -163,8 +323,13 @@ export default function EditorRich({
 				onReveal={({ pos, problems }) => reveal({ pos, problem: problems[0] })}
 			/>
 			<MenuFormat editor={editor} isEditingLink={isEditingLink} onEditLink={setIsEditingLink} />
-			<MenuButton editor={editor} isEditingLink={isEditingButtonLink} onEditLink={setIsEditingButtonLink} />
-			<MenuImage editor={editor} />
+			<MenuButton editor={editor} visible={showBlocks} isEditingLink={isEditingButtonLink} onEditLink={setIsEditingButtonLink} />
+			<MenuImage editor={editor} visible={showBlocks} newsletter={newsletter} />
+			<MenuSocial editor={editor} visible={showBlocks} newsletter={newsletter} />
+			<MenuVideo editor={editor} visible={showBlocks} newsletter={newsletter} />
+            {showBlocks && <MenuHeading editor={editor} />}
+            {showBlocks && <MenuDivider editor={editor} />}
+            {showBlocks && <MenuColumns editor={editor} />}
 			<TooltipMergeTag editor={editor} contactFields={contactFields} />
 			<DialogImagePicker
 				open={isPickingImage}

@@ -427,7 +427,7 @@ export default function FormCampaign({
 				</div>
 			</header>
 
-			<div className="mx-auto w-full max-w-2xl">
+			<div className={`mx-auto w-full max-w-2xl ${step === "write" && !isHtml ? "designer-content-column" : ""}`}>
 				{step !== "write" && accountProblems.length > 0 && (
 					<NoticeSendProblems
 						problems={accountProblems}
@@ -480,6 +480,7 @@ export default function FormCampaign({
 							</div>
 						) : (
 							<EditorRich
+								showBlocks={step === "write"}
 								ref={editorRef}
 								gutterRef={writeRef}
 								content={initialBody}

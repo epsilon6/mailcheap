@@ -51,6 +51,8 @@ const newsletterSchema = new mongoose.Schema(
 		sendingDomain: { type: String, lowercase: true, trim: true },
 		description: { type: String, trim: true },
 		socialLinks: [{ type: String, trim: true }],
+		imageDelivery: { type: String, enum: ["hosted", "embedded"], default: "hosted" },
+		socialCatalog: { type: [{ _id: false, id: String, name: String, icon: String, blackIcon: String, whiteIcon: String, defaultUrl: String, alt: String, selected: Boolean }], default: undefined },
 		// The archive's author page; the author's name is fromName.
 		author: {
 			bio: { type: String, trim: true },
