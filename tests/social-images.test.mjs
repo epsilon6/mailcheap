@@ -52,12 +52,26 @@ test("per-image delivery overrides the default, deduplicates CID parts and leave
 	assert.doesNotMatch(email.html, /data-image-delivery/);
 	assert.equal(original.html, source); assert.equal(email.text, original.text);
 });
-test("default delivery applies only to marked images and failures never silently fall back", async () => {
-	const email = { html: '<img src="https://example.com/a.png" data-image-delivery="default">' };
+test("an image chosen as embedded fails loudly, and one following the default stays hosted when it can't be embedded", async () => {
+	const chosen = { html: '<img src="https://example.com/a.png" data-image-delivery="embedded">' };
+	const following = { html: '<img src="https://example.com/a.png" data-image-delivery="default">' };
 	const readImage = async () => { throw new Error("Not owned"); };
-	assert.equal((await prepareInlineImages(email, { readImage })).attachments, undefined);
-	await assert.rejects(prepareInlineImages(email, { delivery: "embedded", readImage }), /Not owned/);
-	await assert.rejects(prepareInlineImages(email, { delivery: "embedded", readImage: async () => ({ bytes: new Uint8Array(MAX_INLINE_BYTES + 1), contentType: "image/png" }) }), /8 MB/);
+	const huge = async () => ({ bytes: new Uint8Array(MAX_INLINE_BYTES + 1), contentType: "image/png" });
+	assert.equal((await prepareInlineImages(following, { readImage })).attachments, undefined);
+	await assert.rejects(prepareInlineImages(chosen, { delivery: "hosted", readImage }), /Not owned/);
+	await assert.rejects(prepareInlineImages(chosen, { readImage: huge }), /8 MB/);
+	for (const read of [readImage, huge]) {
+		const kept = await prepareInlineImages(following, { delivery: "embedded", readImage: read });
+		assert.equal(kept.attachments, undefined);
+		assert.equal(kept.html, '<img src="https://example.com/a.png">');
+	}
+});
+test("chosen embedded images claim the size limit before images that follow the default", async () => {
+	const html = '<img src="https://example.com/default.png" data-image-delivery="default"><img src="https://example.com/chosen.png" data-image-delivery="embedded">';
+	const readImage = async () => ({ bytes: new Uint8Array(MAX_INLINE_BYTES * 0.6), contentType: "image/png" });
+	const email = await prepareInlineImages({ html }, { delivery: "embedded", readImage });
+	assert.equal(email.attachments.length, 1);
+	assert.match(email.html, /<img src="https:\/\/example\.com\/default\.png"><img src="cid:image-[0-9a-f]{32}">/);
 });
 test("legacy image blocks retain the delivery override and HTML code blocks still render", () => {
 	const stored = cleanRichHtml('<img src="https://example.com/a.png" data-image-delivery="embedded"><div data-html-block="">&lt;p style="color:red"&gt;Custom code&lt;/p&gt;</div>');

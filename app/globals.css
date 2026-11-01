@@ -836,6 +836,26 @@ html:has([data-campaign-steps]):not(:has([data-sidebar-expanded])) {
   &.tiptap [data-button] > span * {
     color: inherit;
   }
+  /* Column rows (lib/editor-columns.js) are layout, not data: no table rules, and on a phone the columns stack. The
+     editor keeps them side by side, where they're being arranged. */
+  &:not(.tiptap) table[data-columns] {
+    border: 0;
+  }
+  &:not(.tiptap) table[data-columns] :where(tr, td) {
+    border: 0;
+  }
+  &:not(.tiptap) table[data-columns] td > :first-child {
+    margin-top: 0;
+  }
+  @media (width < 40rem) {
+    &:not(.tiptap) :is(table[data-columns], table[data-columns] tbody, table[data-columns] tr, table[data-columns] td) {
+      display: block;
+      width: 100% !important;
+    }
+    &:not(.tiptap) table[data-columns] td {
+      padding: 0 !important;
+    }
+  }
   /* HTML blocks (lib/clean-html.js) style themselves inline, as in emails: the article's own pictures, tables and
      captions stay out of them, and what's wider than the column scrolls. */
   & [data-html-block] {

@@ -40,6 +40,14 @@ export default function WritingPage() {
 			<h2 id="editor">The editor</h2>
 			<ul>
 				<li>
+					<strong>Content blocks</strong>: the dock beside the issue adds a picture, a heading, a paragraph, a{" "}
+					<Link href={getHelpHref("writing", "buttons")}>button</Link>, a divider, a spacer,{" "}
+					<Link href={getHelpHref("writing", "html")}>your own HTML</Link>,{" "}
+					<Link href={getHelpHref("writing", "social-blocks")}>social links</Link> or a{" "}
+					<Link href={getHelpHref("writing", "video-blocks")}>video</Link>. Click one to add it where the cursor is, or drag it where
+					it goes. Drop it beside a block to make <Link href={getHelpHref("writing", "columns")}>columns</Link>.
+				</li>
+				<li>
 					<strong>Formatting</strong>: select text to get bold, italic, strikethrough, a link, two heading sizes and a quote.
 				</li>
 				<li>
@@ -73,19 +81,22 @@ export default function WritingPage() {
 				background, and its address never changes, so sent emails keep showing it.
 			</p>
 			<p>
-				Drag the handles on a picture&apos;s sides to resize it. Point at it to show its toolbar, inside its top edge (on a touch
-				screen, tap the picture): place it on the left, in the center or on the right, add its alt text, or delete it. Emails and your
-				website keep it where you put it.
+				Drag the handles on a picture&apos;s sides to resize it. Click a picture to open its settings on the right. Original keeps its
+				own size, never wider than the column; Fill stretches it
+				to the column&apos;s width; Scale sets its width as a percentage. Place it on the left, in the center or on the right, link it
+				to a web page and choose whether the link opens a new tab. Duplicate, Move up, Move down and Delete are at the bottom of the
+				panel. Emails and your website keep these settings.
 			</p>
 			<FigureHelp
-				src="/help/writing/picture-toolbar.webp"
-				alt="A picture in the editor with its toolbar: align left, center and right, Alt and delete."
-				caption="A picture and its toolbar"
+				src="/help/writing/picture-settings.webp"
+				alt="A picture selected in the editor, with its settings on the right: size, alignment, link, delivery and alt text."
+				caption="A picture and its settings"
 			/>
 			<p>
 				Alt text describes the picture in a few words, for readers who can&apos;t see it, inboxes that block images and search
-				engines reading your website. Click Alt and type it: it saves as you type, and <kbd>Enter</kbd> closes it. The Alt button
-				stays highlighted once a picture has one.
+				engines reading your website. Type it under Accessibility in the picture&apos;s settings. Leave it blank for a picture that&apos;s
+				only decoration, so screen readers skip it. Delivery chooses how the picture travels in emails: see{" "}
+				<Link href={getHelpHref("writing", "image-delivery")}>hosted and embedded images</Link>.
 			</p>
 
 			<h2 id="buttons">Buttons</h2>
@@ -99,8 +110,8 @@ export default function WritingPage() {
 			</p>
 			<FigureHelp
 				src="/help/writing/button.webp"
-				alt="A button in the editor in the newsletter's green, its text written on it, with the bar above it that places it, shows its link and deletes it."
-				caption="A button and the bar above it"
+				alt="A button selected in the editor, with its settings on the right: its link, its alignment and the buttons to duplicate, move or delete it."
+				caption="A button and its settings"
 			/>
 			<p>
 				Buttons take your newsletter&apos;s <Link href={getHelpHref("design", "customize")}>theme</Link>: its accent color, with text
@@ -108,6 +119,40 @@ export default function WritingPage() {
 				<LinkApp href="/newsletters/design">Design</LinkApp>, and every button follows. A button needs its text and its link before the
 				issue can go out: a <Link href={getHelpHref("writing", "problems")}>red dot</Link> beside it says which is missing once
 				you move on, and so does the review step.
+			</p>
+
+			<h2 id="text-styles">Headings, paragraphs and dividers</h2>
+			<p>
+				Click in a heading or paragraph to open its settings on the right: its level or text style, font, size, alignment, line
+				height, letter spacing, text and background colors, padding, the space above it, a border and rounded corners. Reset
+				formatting puts it back the way it started. The fonts are ones every inbox has, each with a similar font to fall back on.
+			</p>
+			<p>
+				Click a divider, anywhere in its highlighted area, to change its line&apos;s color, style and thickness and the space around
+				it. From the keyboard, <kbd>Tab</kbd> to it and press <kbd>Enter</kbd>. A spacer adds a fixed gap between two blocks. Emails
+				and your website show all of these the same way.
+			</p>
+
+			<h2 id="columns">Columns</h2>
+			<p>
+				Drag a block from the dock onto the left or right half of a block in the issue, and the two sit side by side in columns. A
+				shaded area shows which side it lands on. Each column takes any mix of blocks: drag more into one, and a purple line shows
+				where they land. The gray outlines around columns only show while you edit.
+			</p>
+			<p>
+				While you edit in a column, its settings open at the bottom left. Columns share a grid 12 parts wide: change one
+				column&apos;s width and its neighbor makes room. Add column adds another. A column&apos;s bin deletes it and gives its width
+				to the others, after asking first if it has anything in it. With one column left, its blocks go back into the issue. Deleting
+				a column undoes like any other change.
+			</p>
+			<FigureHelp
+				src="/help/writing/columns.webp"
+				alt="Two columns in the editor, a short one on the left and a wider one on the right, with the column settings showing their widths."
+				caption="Columns and their widths"
+			/>
+			<p>
+				On your website, columns sit side by side on a wide screen and stack on a phone. Emails keep them side by side on every
+				screen, so on a phone each column is narrow: keep column text short.
 			</p>
 
 			<h2 id="video-blocks">Video</h2>
@@ -122,7 +167,7 @@ export default function WritingPage() {
 			<FigureHelp src="/help/writing/social-block.webp" alt="A sample campaign with centered social icons and a right-side panel for profile links and accessible descriptions." caption="A Social block and its settings" />
 			<h2 id="image-delivery">Hosted and embedded images</h2>
 			<p>Each picture and Social block can use the newsletter default, load a hosted image or embed its image in the email. Hosted images keep the email smaller. Embedded images travel as inline attachments, so the recipient does not need your image server to display them. Their appearance depends on the recipient&apos;s email app.</p>
-			<p>Set the newsletter default in <LinkApp href="/newsletters/socials">Social networks and images</LinkApp>. Your stored images remain available for editing and web previews with either choice. Embedded delivery currently requires a compatible email provider and an image uploaded to your account, or a built-in social icon. Embedded files total at most 8 MB per email; use hosted delivery for larger pictures.</p>
+			<p>Set the newsletter default in <LinkApp href="/newsletters/socials">Social networks and images</LinkApp>. Your stored images remain available for editing and web previews with either choice. Embedded delivery currently requires a compatible email provider and an image uploaded to your account, or a built-in social icon. Embedded files total at most 8 MB per email; use hosted delivery for larger pictures. A picture that follows the newsletter default stays hosted when it can&apos;t be embedded, like one linked from another site or one too big to attach, so changing the default never stops an older issue. A picture you set to Embedded yourself must be embedded: if it can&apos;t be, the send or test stops before anything goes out and says what to fix.</p>
 
 			<h2 id="html">HTML blocks</h2>
 			<p>
@@ -173,7 +218,7 @@ export default function WritingPage() {
 
 			<h2 id="deleting-blocks">Deleting blocks</h2>
 			<p>
-				Pictures, buttons and HTML blocks go as soon as you delete them, from their bin or with the keyboard. A message at the top of
+				Pictures, buttons and HTML blocks go as soon as you delete them, from Delete in their settings, their bin or the keyboard. A message at the top of
 				the page says so for a few seconds: click Undo in it to bring the block back, or press <kbd>⌘ Z</kbd> (<kbd>Ctrl Z</kbd> on
 				Windows), as its button shows. The message goes once you change something else, since undo would take that back first.
 			</p>
@@ -335,10 +380,6 @@ export default function WritingPage() {
 			<p>
 				When you&apos;re done, <Link href={getHelpHref("sending")}>send or schedule it</Link>.
 			</p>
-			<h2 id="designer-blocks">Designing with blocks</h2>
-			<p>The content blocks dock inserts images, headings, paragraphs, buttons, dividers, spacers and HTML code. Click a block to insert it at the cursor, or drag it into the issue. HTML blocks keep their existing code editor.</p>
-			<p>Click inside a heading or paragraph to open its typography, alignment, color, spacing and border settings. Click anywhere in a divider’s highlighted area to adjust its line and spacing. You can also tab to it and press Enter or Space. The larger selection area appears only in the editor. Image settings include size, a web link, new-tab behavior and alt text. Use a short description for meaningful images and empty alt text for decorative images.</p>
-			<p>These designer controls are in development. Separate mobile styling and complete block-background controls are not yet available. Legacy development-only images require a signed-in session. Re-upload them to configured permanent storage for hosted delivery; new uploads can use persistent filesystem storage, S3 or Blob.</p>
 		</ArticleHelp>
 	);
 }
