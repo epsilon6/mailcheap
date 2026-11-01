@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import CardPostmaster from "@/components/CardPostmaster";
 import CardSendingCapacity from "@/components/CardSendingCapacity";
+import CardSendingServer from "@/components/CardSendingServer";
 import CardSettings from "@/components/CardSettings";
 import CardStat from "@/components/CardStat";
 import CardUndeliverable from "@/components/CardUndeliverable";
@@ -19,10 +20,11 @@ import TextEmpty from "@/components/TextEmpty";
 import { listAccountsForAdmin } from "@/lib/accounts";
 import { getAccountTotals, getEmailStats, listAttention, listRecentCampaigns } from "@/lib/admin-stats";
 import { requireAdmin } from "@/lib/auth";
-import { LIMITS, isCloud } from "@/lib/config";
+import { LIMITS, getEmailProviderId, isCloud } from "@/lib/config";
 import { formatNumber, formatPercent } from "@/lib/format";
 import { countGlobalSuppressions } from "@/lib/global-suppressions";
 import { getSendingCapacity } from "@/lib/sending-capacity";
+import { readSendingServerForAdmin } from "@/lib/sending-server";
 import { serialize } from "@/lib/serialize";
 import { cn } from "@/lib/utils";
 import { isObjectIdString } from "@/lib/validation";
@@ -41,7 +43,7 @@ export default async function AdminPage({ searchParams }) {
 	const pinnedId = isObjectIdString(account) ? account : null;
 	const now = new Date();
 	const capacity = getSendingCapacity({ now });
-	const [totals, emails, campaigns, attention, accounts, pinned, undeliverable] = await Promise.all([
+	const [totals, emails, campaigns, attention, accounts, pinned, undeliverable, sendingServer] = await Promise.all([
 		getAccountTotals({ now }),
 		getEmailStats({ now }),
 		listRecentCampaigns(),
@@ -49,6 +51,7 @@ export default async function AdminPage({ searchParams }) {
 		listAccountsForAdmin({ search, limit: ACCOUNTS_SHOWN }),
 		pinnedId ? listAccountsForAdmin({ accountId: pinnedId }) : [],
 		countGlobalSuppressions(),
+		isCloud() ? null : readSendingServerForAdmin(),
 	]);
 	const hasPlans = isCloud();
 	const listed = [...pinned, ...accounts.filter(({ _id }) => String(_id) !== pinnedId)];
@@ -144,6 +147,13 @@ export default async function AdminPage({ searchParams }) {
 						<CardPostmaster notice={typeof postmaster === "string" ? postmaster : undefined} />
 					</Suspense>
 				</section>
+
+				{sendingServer && (
+					<section style={{ "--stagger": 6 }} className="flex flex-col gap-3 animate-enter">
+						<h2 className="text-sm font-medium text-muted-foreground">Sending server</h2>
+						<CardSendingServer server={serialize(sendingServer)} provider={getEmailProviderId()} />
+					</section>
+				)}
 			</div>
 		</>
 	);

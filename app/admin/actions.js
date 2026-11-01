@@ -11,6 +11,7 @@ import { isCloud } from "@/lib/config";
 import { approveReview, approveSignupEmailReview, rejectReview, rejectSignupEmailReview } from "@/lib/content-review-decisions";
 import { getGlobalSuppression, removeGlobalSuppression } from "@/lib/global-suppressions";
 import { getPlan } from "@/lib/plans";
+import { saveSendingServer, testSendingServer } from "@/lib/sending-server";
 import { serialize } from "@/lib/serialize";
 import { normalizeEmail } from "@/lib/validation";
 
@@ -193,4 +194,23 @@ export async function removeUndeliverableAddress(email) {
 	console.info(`[admin] ${admin.email} took an address off the never-email list: ${removed.restored} contacts active again`);
 	revalidatePath("/admin");
 	return { ok: true, restored: removed.restored };
+}
+
+// The SMTP server a self-hosted server sends through. The log says who saved what, never a password.
+export async function saveSendingServerAction(input) {
+	const admin = await requireAdmin();
+	if (isCloud()) return { error: "MailCheap Cloud sends through its own provider" };
+	const result = await saveSendingServer(input, { by: admin.email });
+	if (result.ok) {
+		const changed = [input?.smtp?.password && "SMTP password", input?.imap?.password && "bounce mailbox password"].filter(Boolean);
+		console.info(`[admin] ${admin.email} saved the SMTP server: ${input?.enabled ? "on" : "off"}${changed.length ? `, new ${changed.join(" and ")}` : ""}`);
+		revalidatePath("/admin");
+	}
+	return result;
+}
+
+export async function testSendingServerAction(input) {
+	await requireAdmin();
+	if (isCloud()) return { error: "MailCheap Cloud sends through its own provider" };
+	return testSendingServer(input);
 }

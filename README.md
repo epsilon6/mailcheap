@@ -195,7 +195,7 @@ Without Resend, sign-in codes and alerts go through a tenant of their own, `mc-p
 
 #### Your own SMTP server
 
-On a self-hosted server, MailCheap can send through any SMTP server: your own mail server, or a relay. Set `EMAIL_PROVIDER=smtp` and the `SMTP_*` settings in `.env.example`. MailCheap Cloud never uses it, since it has no separate sending space per account.
+On a self-hosted server, MailCheap can send through any SMTP server: your own mail server, or a relay. Set it up on `/admin`, under **Sending server**: the SMTP server, the bounce mailbox, and **Test connection** to check both logins without sending anything. Passwords are stored encrypted, so `CREDENTIALS_ENCRYPTION_KEY` has to be set (`openssl rand -base64 32`), and the page never shows them again. A switch between servers waits until no campaign is sending. Or set `EMAIL_PROVIDER=smtp` and the `SMTP_*` settings in `.env.example`: the environment wins over the page. MailCheap Cloud never uses it, since it has no separate sending space per account.
 
 What SES and PostShiba do for you, MailCheap does itself here, with your help:
 
